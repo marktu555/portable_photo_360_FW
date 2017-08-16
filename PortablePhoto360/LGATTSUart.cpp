@@ -1,5 +1,6 @@
 #include "vmbtgatt.h"
 #include "LGATTSUart.h"
+#include <Stepper.h>
 
 #ifdef APP_LOG
 #undef APP_LOG
@@ -12,19 +13,8 @@
 #define ATTR_LED  260
 #define ATTR_MOT  262
 
-typedef struct led_config {
-    uint8_t led_0;
-    uint8_t led_1;
-    uint8_t led_2;
-} LED_CONFIG;
-LED_CONFIG led;
-
-typedef struct motor_config {
-    uint8_t is_ready;
-    uint8_t rotate;
-    uint8_t angle;
-} MOTOR_CONFIG;
-MOTOR_CONFIG motor;
+extern MOTOR_CONFIG motor;
+extern LED_CONFIG led;
 
 /*
  * typedef struct {
@@ -126,7 +116,7 @@ boolean LGATTSUart::onRead(LGATTReadRequest &data)
                 value.len = 3;
                 break;
             case ATTR_MOT:
-                value.value[0] = motor.is_ready;
+                value.value[0] = motor.received;
                 value.value[1] = motor.rotate;
                 value.value[2] = motor.angle;
                 value.len = 3;
@@ -184,6 +174,8 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
                 motor.angle = data.value.value[2] & 0xFF;
+                motor.received = 1;
+                APP_LOGLN("Motor !  %x %x", motor.rotate, motor.angle);
                 break;
             default:
                 APP_LOG("Unknown handle");
@@ -191,4 +183,5 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     }
     return true;
 }
+
 

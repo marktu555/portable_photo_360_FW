@@ -3,6 +3,20 @@
 
 #include "LGATTServer.h"
 
+typedef struct led_config {
+    uint8_t led_0;
+    uint8_t led_1;
+    uint8_t led_2;
+} LED_CONFIG;
+
+
+typedef struct motor_config {
+    uint8_t received;
+    uint8_t rotate;
+    uint8_t angle;
+} MOTOR_CONFIG;
+
+
 class LGATTSUart : public LGATTService
 {
 public:
@@ -30,3 +44,4 @@ private:
 
 
 #endif
+
