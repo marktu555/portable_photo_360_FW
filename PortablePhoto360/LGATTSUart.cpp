@@ -1,6 +1,6 @@
 #include "vmbtgatt.h"
 #include "LGATTSUart.h"
-#include <Stepper.h>
+#include "LED.h"
 
 #ifdef APP_LOG
 #undef APP_LOG
@@ -14,7 +14,7 @@
 #define ATTR_MOT  262
 
 extern MOTOR_CONFIG motor;
-extern LED_CONFIG led;
+LED_CONFIG led;
 
 /*
  * typedef struct {
@@ -56,6 +56,7 @@ uint16_t LGATTSUart::getHandle(int32_t type)
 // prepare the data for profile
 LGATTServiceInfo *LGATTSUart::onLoadService(int32_t index)
 {
+    //LED_init();
     return g_uart_decl;
 }
 
@@ -110,13 +111,16 @@ boolean LGATTSUart::onRead(LGATTReadRequest &data)
                 value.len = 1;
                 break;
             case ATTR_LED:
-                value.value[0] = led.led_0;
-                value.value[1] = led.led_1;
-                value.value[2] = led.led_2;
-                value.len = 3;
+                value.value[0] = led.led_0 & 0xFF;
+                value.value[1] = led.led_0 >> 8;
+                value.value[2] = led.led_1 & 0xFF;
+                value.value[3] = led.led_1 >> 8;
+                value.value[4] = led.led_2 & 0xFF;
+                value.value[5] = led.led_2 >> 8;
+                value.len = 6;
                 break;
             case ATTR_MOT:
-                value.value[0] = motor.received;
+                value.value[0] = motor.busy;
                 value.value[1] = motor.rotate;
                 value.value[2] = motor.angle;
                 value.len = 3;
@@ -144,10 +148,10 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     // Read UART data.
     if (_connected)
     {
+        LGATTAttributeValue value;
         // if need to rsp to central.
         if (data.need_rsp)
         {
-            LGATTAttributeValue value;
             value.len = 0;
             data.ackOK();
         }
@@ -167,14 +171,16 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
         switch (data.attr_handle)
         {
             case ATTR_LED:
-                led.led_0 = data.value.value[0] & 0x01;
-                led.led_1 = data.value.value[1] & 0x01;
-                led.led_2 = data.value.value[2] & 0x01;
+                led.led_0 = data.value.value[0] & (data.value.value[1] << 8);
+                led.led_1 = data.value.value[2] & (data.value.value[3] << 8);
+                led.led_2 = data.value.value[4] & (data.value.value[5] << 8);
+                APP_LOGLN("LED: %02X %02X %02X", led.led_0, led.led_1, led.led_2);
+                //LED_set(&led);
                 break;
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
                 motor.angle = data.value.value[2] & 0xFF;
-                motor.received = 1;
+                motor.busy = 1;
                 APP_LOGLN("Motor !  %x %x", motor.rotate, motor.angle);
                 break;
             default:

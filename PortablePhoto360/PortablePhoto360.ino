@@ -1,6 +1,5 @@
 #include "LGATTSUart.h"
 #include <LGATTUUID.h>
-#include "Stepper.h"
 
 #ifdef APP_LOG
 #undef APP_LOG
@@ -9,37 +8,54 @@
 #define APP_LOG(...) Serial.printf(__VA_ARGS__); \
     Serial.println();
 
-// declare variable
-const int stepsPerRevolution = 2053;
+#define MOTOR_PIN_EN    5
+#define MOTOR_PIN_DIR   6
+#define MOTOR_PIN_STEP  7
+#define MOTOR_CIRCLE_PER_STEPS  8192
+#define DEGREE_TO_STEPS  (MOTOR_CIRCLE_PER_STEPS/360) //->22  should be 22.75
+
+// Declare variable
 LGATTSUart uart;
 MOTOR_CONFIG motor;
-LED_CONFIG led;
+
 static int steps = 0;
 
-Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);    // initialize the stepper library on pins 8 through 11:
-
 void Proc_Motor_Ctrl(){
-    if(motor.received == 1){
-        motor.received = 0;
-        APP_LOG("motor received flag assert: %2x %2x", motor.rotate, motor.angle);
+    if(motor.busy == 1){
+        APP_LOG("motor received flag assert: %2x %2x(%d)", motor.rotate, motor.angle, motor.angle);
 
         if(motor.rotate == 0x01) {
             //APP_LOG("clockwise");
-            steps = motor.angle;
+            digitalWrite(MOTOR_PIN_DIR, HIGH);
         } else {
             //APP_LOG("counterclockwise");
-            steps = -motor.angle;
+            digitalWrite(MOTOR_PIN_DIR, LOW);
         }
-        myStepper.step(steps);
-    }
+        // Convert angle to steps
+        steps =  motor.angle * DEGREE_TO_STEPS;
+        APP_LOG("%d steps", steps);
 
+        for(int i = 0; i<steps; i++) {
+            digitalWrite(MOTOR_PIN_STEP,HIGH);
+            delayMicroseconds(100);
+            digitalWrite(MOTOR_PIN_STEP,LOW);
+            delayMicroseconds(100);
+        }
+        motor.busy = 0;
+    }
 }
+
 void setup() {
     // put your setup code here, to run once:
-    myStepper.setSpeed(10);     // set the speed at 20 rpm:
+    pinMode(MOTOR_PIN_EN, OUTPUT);
+    pinMode(MOTOR_PIN_DIR, OUTPUT);
+    pinMode(MOTOR_PIN_STEP, OUTPUT);
+
+    digitalWrite(MOTOR_PIN_EN, HIGH); // disable first
 
     Serial.begin(115200);
     delay(2000);
+    APP_LOG("1 degree cost %d steps", DEGREE_TO_STEPS);
 
     if (!LGATTServer.begin(1, &uart))
     {
@@ -76,5 +92,4 @@ void loop() {
     //uart.send(value, uart.getHandle(0), false); // just a notify
 #endif
 }
-
 
