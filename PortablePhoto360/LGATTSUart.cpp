@@ -1,6 +1,6 @@
 #include "vmbtgatt.h"
 #include "LGATTSUart.h"
-#include "LED.h"
+#include "PwmLed.h"
 
 #ifdef APP_LOG
 #undef APP_LOG
@@ -14,7 +14,8 @@
 #define ATTR_MOT  262
 
 extern MOTOR_CONFIG motor;
-LED_CONFIG led;
+PwmLed led;
+LED_CONFIG led_config;
 
 /*
  * typedef struct {
@@ -111,12 +112,12 @@ boolean LGATTSUart::onRead(LGATTReadRequest &data)
                 value.len = 1;
                 break;
             case ATTR_LED:
-                value.value[0] = led.led_0 & 0xFF;
-                value.value[1] = led.led_0 >> 8;
-                value.value[2] = led.led_1 & 0xFF;
-                value.value[3] = led.led_1 >> 8;
-                value.value[4] = led.led_2 & 0xFF;
-                value.value[5] = led.led_2 >> 8;
+                value.value[0] = led_config.led_0 & 0xFF;
+                value.value[1] = led_config.led_0 >> 8;
+                value.value[2] = led_config.led_1 & 0xFF;
+                value.value[3] = led_config.led_1 >> 8;
+                value.value[4] = led_config.led_2 & 0xFF;
+                value.value[5] = led_config.led_2 >> 8;
                 value.len = 6;
                 break;
             case ATTR_MOT:
@@ -171,11 +172,11 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
         switch (data.attr_handle)
         {
             case ATTR_LED:
-                led.led_0 = data.value.value[0] & (data.value.value[1] << 8);
-                led.led_1 = data.value.value[2] & (data.value.value[3] << 8);
-                led.led_2 = data.value.value[4] & (data.value.value[5] << 8);
-                APP_LOGLN("LED: %02X %02X %02X", led.led_0, led.led_1, led.led_2);
-                //LED_set(&led);
+                led_config.led_0 = data.value.value[0] & (data.value.value[1] << 8);
+                led_config.led_1 = data.value.value[2] & (data.value.value[3] << 8);
+                led_config.led_2 = data.value.value[4] & (data.value.value[5] << 8);
+                APP_LOGLN("LED: %02X %02X %02X", led_config.led_0, led_config.led_1, led_config.led_2);
+                led.LED_set(led_config.led_0, led_config.led_1, led_config.led_2);
                 break;
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
