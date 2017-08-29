@@ -172,17 +172,17 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
         switch (data.attr_handle)
         {
             case ATTR_LED:
-                led_config.led_0 = data.value.value[0] & (data.value.value[1] << 8);
-                led_config.led_1 = data.value.value[2] & (data.value.value[3] << 8);
-                led_config.led_2 = data.value.value[4] & (data.value.value[5] << 8);
-                APP_LOGLN("LED: %02X %02X %02X", led_config.led_0, led_config.led_1, led_config.led_2);
+                led_config.led_0 = data.value.value[0] | (data.value.value[1] << 8);
+                led_config.led_1 = data.value.value[2] | (data.value.value[3] << 8);
+                led_config.led_2 = data.value.value[4] | (data.value.value[5] << 8);
+                APP_LOGLN("LED: %d %d %d", led_config.led_0, led_config.led_1, led_config.led_2);
                 led.LED_set(led_config.led_0, led_config.led_1, led_config.led_2);
                 break;
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
                 motor.angle = data.value.value[2] & 0xFF;
                 motor.busy = 1;
-                APP_LOGLN("Motor !  %x %x", motor.rotate, motor.angle);
+                APP_LOGLN("Motor !  %2X %2X", motor.rotate, motor.angle);
                 break;
             default:
                 APP_LOG("Unknown handle");

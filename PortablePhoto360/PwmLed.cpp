@@ -4,6 +4,7 @@
 
 PwmLed::PwmLed(void)
 {
+    // cannot setup GPIO here
     analogWrite(LED_PIN_0, 0);
     analogWrite(LED_PIN_1, 0);
 }
