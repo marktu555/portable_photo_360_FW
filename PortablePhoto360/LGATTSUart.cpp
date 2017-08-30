@@ -88,7 +88,6 @@ boolean LGATTSUart::onConnection(const LGATTAddress &addr, boolean connected)
     APP_LOGLN("LGATTSUart::onConnection connected [%d], [%x:%x:%x:%x:%x:%x]", _connected, 
         addr.addr[5], addr.addr[4], addr.addr[3], addr.addr[2], addr.addr[1], addr.addr[0]);
 
-
     return true;
 }
 
@@ -175,14 +174,14 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
                 led_config.led_0 = data.value.value[0] | (data.value.value[1] << 8);
                 led_config.led_1 = data.value.value[2] | (data.value.value[3] << 8);
                 led_config.led_2 = data.value.value[4] | (data.value.value[5] << 8);
-                APP_LOGLN("LED: %d %d %d", led_config.led_0, led_config.led_1, led_config.led_2);
+                APP_LOGLN("Set LED: %d %d %d", led_config.led_0, led_config.led_1, led_config.led_2);
                 led.LED_set(led_config.led_0, led_config.led_1, led_config.led_2);
                 break;
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
                 motor.angle = data.value.value[2] & 0xFF;
                 motor.busy = 1;
-                APP_LOGLN("Motor !  %2X %2X", motor.rotate, motor.angle);
+                APP_LOGLN("Set Motor %2X %2X", motor.rotate, motor.angle);
                 break;
             default:
                 APP_LOG("Unknown handle");
@@ -190,5 +189,4 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     }
     return true;
 }
-
 

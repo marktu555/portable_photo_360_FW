@@ -1,6 +1,6 @@
 #include "PwmLed.h"
 // Import Arduino.h for analogWrite()
-#include "Arduino.h"
+#include <Arduino.h>
 
 PwmLed::PwmLed(void)
 {

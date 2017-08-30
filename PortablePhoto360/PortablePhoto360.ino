@@ -28,7 +28,7 @@ void Proc_Motor_Ctrl(){
     if(motor.busy == 1){
         motor.busy = 0;
         digitalWrite(MOTOR_PIN_EN, LOW);
-        
+
         APP_LOG("motor received flag assert: %2x %2x(%d)", motor.rotate, motor.angle, motor.angle);
 
         if(motor.rotate == 0x01) {
@@ -105,4 +105,3 @@ void loop() {
     //uart.send(value, uart.getHandle(0), false); // just a notify
 #endif
 }
-
