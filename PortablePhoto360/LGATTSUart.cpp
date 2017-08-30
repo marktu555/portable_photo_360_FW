@@ -1,6 +1,6 @@
 #include "vmbtgatt.h"
 #include "LGATTSUart.h"
-#include <Stepper.h>
+#include "PwmLed.h"
 
 #ifdef APP_LOG
 #undef APP_LOG
@@ -14,7 +14,8 @@
 #define ATTR_MOT  262
 
 extern MOTOR_CONFIG motor;
-extern LED_CONFIG led;
+PwmLed led;
+LED_CONFIG led_config;
 
 /*
  * typedef struct {
@@ -56,6 +57,7 @@ uint16_t LGATTSUart::getHandle(int32_t type)
 // prepare the data for profile
 LGATTServiceInfo *LGATTSUart::onLoadService(int32_t index)
 {
+    //LED_init();
     return g_uart_decl;
 }
 
@@ -86,7 +88,6 @@ boolean LGATTSUart::onConnection(const LGATTAddress &addr, boolean connected)
     APP_LOGLN("LGATTSUart::onConnection connected [%d], [%x:%x:%x:%x:%x:%x]", _connected, 
         addr.addr[5], addr.addr[4], addr.addr[3], addr.addr[2], addr.addr[1], addr.addr[0]);
 
-
     return true;
 }
 
@@ -110,13 +111,16 @@ boolean LGATTSUart::onRead(LGATTReadRequest &data)
                 value.len = 1;
                 break;
             case ATTR_LED:
-                value.value[0] = led.led_0;
-                value.value[1] = led.led_1;
-                value.value[2] = led.led_2;
-                value.len = 3;
+                value.value[0] = led_config.led_0 & 0xFF;
+                value.value[1] = led_config.led_0 >> 8;
+                value.value[2] = led_config.led_1 & 0xFF;
+                value.value[3] = led_config.led_1 >> 8;
+                value.value[4] = led_config.led_2 & 0xFF;
+                value.value[5] = led_config.led_2 >> 8;
+                value.len = 6;
                 break;
             case ATTR_MOT:
-                value.value[0] = motor.received;
+                value.value[0] = motor.busy;
                 value.value[1] = motor.rotate;
                 value.value[2] = motor.angle;
                 value.len = 3;
@@ -144,10 +148,10 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     // Read UART data.
     if (_connected)
     {
+        LGATTAttributeValue value;
         // if need to rsp to central.
         if (data.need_rsp)
         {
-            LGATTAttributeValue value;
             value.len = 0;
             data.ackOK();
         }
@@ -167,15 +171,17 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
         switch (data.attr_handle)
         {
             case ATTR_LED:
-                led.led_0 = data.value.value[0] & 0x01;
-                led.led_1 = data.value.value[1] & 0x01;
-                led.led_2 = data.value.value[2] & 0x01;
+                led_config.led_0 = data.value.value[0] | (data.value.value[1] << 8);
+                led_config.led_1 = data.value.value[2] | (data.value.value[3] << 8);
+                led_config.led_2 = data.value.value[4] | (data.value.value[5] << 8);
+                APP_LOGLN("Set LED: %d %d %d", led_config.led_0, led_config.led_1, led_config.led_2);
+                led.LED_set(led_config.led_0, led_config.led_1, led_config.led_2);
                 break;
             case ATTR_MOT:
                 motor.rotate = data.value.value[1] & 0x01;
                 motor.angle = data.value.value[2] & 0xFF;
-                motor.received = 1;
-                APP_LOGLN("Motor !  %x %x", motor.rotate, motor.angle);
+                motor.busy = 1;
+                APP_LOGLN("Set Motor %2X %2X", motor.rotate, motor.angle);
                 break;
             default:
                 APP_LOG("Unknown handle");
@@ -183,5 +189,4 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     }
     return true;
 }
-
 
