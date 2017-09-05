@@ -1,5 +1,6 @@
 #include "vmbtgatt.h"
 #include "LGATTSUart.h"
+#include <LBattery.h>
 #include "PwmLed.h"
 
 #ifdef APP_LOG
@@ -107,8 +108,11 @@ boolean LGATTSUart::onRead(LGATTReadRequest &data)
         switch (data.attr_handle)
         {
             case ATTR_GEN:
+                APP_LOGLN("Batt: %d, %d", LBattery.isCharging(), LBattery.level());
                 value.value[0] = 0x00;
-                value.len = 1;
+                value.value[1] = LBattery.isCharging();
+                value.value[2] = LBattery.level();
+                value.len = 3;
                 break;
             case ATTR_LED:
                 value.value[0] = led_config.led_0 & 0xFF;
@@ -189,4 +193,5 @@ boolean LGATTSUart::onWrite(LGATTWriteRequest &data)
     }
     return true;
 }
+
 

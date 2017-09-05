@@ -15,3 +15,4 @@ void PwmLed::LED_set(unsigned short led_0, unsigned short led_1, unsigned short 
     analogWrite(LED_PIN_1, led_1);
     //analogWrite(LED_PIN_2, led_2);
 }
+
